@@ -96,7 +96,7 @@ Installing on Windows
 
 The easiest way to get phpMyAdmin on Windows is using third party products
 which include phpMyAdmin together with a database and web server such as
-`XAMPP <https://www.apachefriends.org/>`_.
+`XAMPP <https://www.apachefriends.org/index.html>`_.
 
 You can find more of such options at `Wikipedia <https://en.wikipedia.org/wiki/List_of_AMP_packages>`_.
 
@@ -479,7 +479,7 @@ Quick Install
    webserver's document root. If you don't have direct access to your
    document root, put the files in a directory on your local machine,
    and, after step 4, transfer the directory on your web server using,
-   for example, ftp.
+   for example, FTP.
 #. Ensure that all the scripts have the appropriate owner (if PHP is
    running in safe mode, having some scripts with an owner different from
    the owner of other scripts will be a problem). See :ref:`faq4_2` and

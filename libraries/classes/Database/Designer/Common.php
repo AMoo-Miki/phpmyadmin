@@ -40,7 +40,7 @@ class Common
     public function __construct(DatabaseInterface $dbi)
     {
         $this->dbi = $dbi;
-        $this->relation = new Relation();
+        $this->relation = new Relation($this->dbi);
     }
 
     /**
@@ -282,13 +282,13 @@ class Common
      *
      * @param int $pg pdf page id
      *
-     * @return array of table positions
+     * @return array|null of table positions
      */
-    public function getTablePositions($pg)
+    public function getTablePositions($pg): ?array
     {
         $cfgRelation = $this->relation->getRelationsParam();
         if (! $cfgRelation['pdfwork']) {
-            return null;
+            return array();
         }
 
         $query = "
@@ -405,7 +405,7 @@ class Common
             DatabaseInterface::QUERY_STORE
         );
 
-        if (isset($default_page_no) && count($default_page_no)) {
+        if (! is_null($default_page_no) && count($default_page_no)) {
             return intval($default_page_no[0]);
         }
         return -1;

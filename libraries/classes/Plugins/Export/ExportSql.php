@@ -305,11 +305,26 @@ class ExportSql extends ExportPlugin
                 $subgroup->addProperty($subgroup_create_table);
 
                 // Add view option
+                $subgroup_create_view = new OptionsPropertySubgroup();
                 $leaf = new BoolPropertyItem(
                     'create_view',
                     sprintf(__('Add %s statement'), '<code>CREATE VIEW</code>')
                 );
-                $subgroup->addProperty($leaf);
+                $subgroup_create_view->setSubgroupHeader($leaf);
+
+                $leaf = new BoolPropertyItem(
+                    'view_current_user',
+                    __('Exclude definition of current user')
+                );
+                $subgroup_create_view->addProperty($leaf);
+
+                $leaf = new BoolPropertyItem(
+                    'or_replace_view',
+                    sprintf(__('%s view'), '<code>OR REPLACE</code>')
+                );
+                $subgroup_create_view->addProperty($leaf);
+
+                $subgroup->addProperty($subgroup_create_view);
 
                 $leaf = new BoolPropertyItem(
                     'procedure_function',
@@ -1400,7 +1415,7 @@ class ExportSql extends ExportPlugin
         // with $GLOBALS['dbi']->numRows() in mysqli
         $result = $GLOBALS['dbi']->tryQuery(
             'SHOW TABLE STATUS FROM ' . Util::backquote($db)
-            . ' WHERE Name = \'' . $GLOBALS['dbi']->escapeString($table) . '\'',
+            . ' WHERE Name = \'' . $GLOBALS['dbi']->escapeString((string)$table) . '\'',
             DatabaseInterface::CONNECT_USER,
             DatabaseInterface::QUERY_STORE
         );
@@ -1461,6 +1476,14 @@ class ExportSql extends ExportPlugin
         }
 
         $schema_create .= $new_crlf;
+
+        if (!empty($sql_drop_table)
+            && $GLOBALS['dbi']->getTable($db, $table)->isView()
+        ) {
+            $schema_create .= 'DROP VIEW IF EXISTS '
+                . Util::backquote($table_alias, $sql_backquotes) . ';'
+                . $crlf;
+        }
 
         // no need to generate a DROP VIEW here, it was done earlier
         if (!empty($sql_drop_table)
@@ -1535,6 +1558,24 @@ class ExportSql extends ExportPlugin
                     '',
                     $create_query
                 );
+
+                // exclude definition of current user
+                if ($GLOBALS['sql_view_current_user']) {
+                    $create_query = preg_replace(
+                        '/(^|\s)DEFINER=([\S]+)/',
+                        '',
+                        $create_query
+                    );
+                }
+
+                // whether to replace existing view or not
+                if ($GLOBALS['sql_or_replace_view']) {
+                    $create_query = preg_replace(
+                        '/^CREATE/',
+                        'CREATE OR REPLACE',
+                        $create_query
+                    );
+                }
             }
 
             // Substitute aliases in `CREATE` query.
@@ -2827,18 +2868,18 @@ class ExportSql extends ExportPlugin
     /**
      * Generate comment
      *
-     * @param string $crlf          Carriage return character
-     * @param string $sql_statement SQL statement
-     * @param string $comment1      Comment for dumped table
-     * @param string $comment2      Comment for current table
-     * @param string $table_alias   Table alias
-     * @param string $compat        Compatibility mode
+     * @param string      $crlf          Carriage return character
+     * @param string|null $sql_statement SQL statement
+     * @param string      $comment1      Comment for dumped table
+     * @param string      $comment2      Comment for current table
+     * @param string      $table_alias   Table alias
+     * @param string      $compat        Compatibility mode
      *
      * @return string
      */
     protected function generateComment(
         $crlf,
-        $sql_statement,
+        ?string $sql_statement,
         $comment1,
         $comment2,
         $table_alias,

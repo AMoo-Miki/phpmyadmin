@@ -61,7 +61,7 @@ class Menu
         $this->_server = $server;
         $this->_db = $db;
         $this->_table = $table;
-        $this->relation = new Relation();
+        $this->relation = new Relation($GLOBALS['dbi']);
     }
 
     /**
@@ -480,11 +480,18 @@ class Menu
             $tabs['search']['warning'] = __('Database seems to be empty!');
         }
 
-        $tabs['multi_table_query']['text'] = __('Query');
-        $tabs['multi_table_query']['icon'] = 's_db';
-        $tabs['multi_table_query']['link'] = 'db_multi_table_query.php';
+        $tabs['query']['text'] = __('Query');
+        $tabs['query']['icon'] = 's_db';
+        $tabs['query']['link'] = 'db_multi_table_query.php';
+        $tabs['query']['active'] = in_array(
+            basename($GLOBALS['PMA_PHP_SELF']),
+            array(
+                'db_multi_table_query.php',
+                'db_qbe.php',
+            )
+        );
         if ($num_tables == 0) {
-            $tabs['qbe']['warning'] = __('Database seems to be empty!');
+            $tabs['query']['warning'] = __('Database seems to be empty!');
         }
 
         $tabs['export']['text'] = __('Export');
